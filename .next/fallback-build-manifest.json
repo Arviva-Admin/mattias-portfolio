@@ -1,0 +1,12 @@
+{
+  "pages": {
+    "/_app": []
+  },
+  "devFiles": [],
+  "polyfillFiles": [],
+  "lowPriorityFiles": [
+    "static/JAC-Ps55TorOKvKzDuvbI/_ssgManifest.js",
+    "static/JAC-Ps55TorOKvKzDuvbI/_buildManifest.js"
+  ],
+  "rootMainFiles": []
+}
