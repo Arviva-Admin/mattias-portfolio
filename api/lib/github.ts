@@ -195,7 +195,7 @@ export async function listRepositories() {
       per_page: 100,
     });
 
-    return data.map((repo) => ({
+    return data.map((repo: any) => ({
       name: repo.name,
       fullName: repo.full_name,
       description: repo.description,
