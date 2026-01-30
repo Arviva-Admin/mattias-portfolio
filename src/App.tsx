@@ -6,6 +6,7 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
 import Login from './pages/Login'
+import ChatWidget from './components/ChatWidget'
 
 const queryClient = new QueryClient()
 
@@ -23,6 +24,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={user ? <Admin /> : <Login />} />
       </Routes>
+      <ChatWidget />
     </Router>
   )
 }
