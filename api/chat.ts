@@ -268,7 +268,7 @@ export default function RootLayout({
 // Function implementations
 async function executeFunction(name: string, args: any) {
   switch (name) {
-    case 'get_projects':
+    case 'get_projects': {
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -276,8 +276,9 @@ async function executeFunction(name: string, args: any) {
       
       if (error) throw error;
       return { projects: data };
+    }
 
-    case 'create_project':
+    case 'create_project': {
       // Create GitHub repo
       const repoName = args.name.toLowerCase().replace(/\s+/g, '-');
       const repoResult = await github.createRepository({
@@ -326,8 +327,9 @@ async function executeFunction(name: string, args: any) {
         repo: repoResult.repo,
         vercel: vercelProject.project,
       };
+    }
 
-    case 'modify_project_code':
+    case 'modify_project_code': {
       // Get project from database
       const { data: projectData } = await supabase
         .from('projects')
@@ -356,8 +358,9 @@ async function executeFunction(name: string, args: any) {
         projectId: args.projectId,
         filesUpdated: args.files.length,
       };
+    }
 
-    case 'delete_project':
+    case 'delete_project': {
       const { error: deleteError } = await supabase
         .from('projects')
         .delete()
@@ -365,6 +368,7 @@ async function executeFunction(name: string, args: any) {
       
       if (deleteError) throw deleteError;
       return { success: true, deletedId: args.projectId };
+    }
 
     default:
       throw new Error(`Unknown function: ${name}`);
