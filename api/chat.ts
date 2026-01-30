@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import * as github from './lib/github';
-import * as vercel from './lib/vercel';
+// import * as github from './lib/github';
+// import * as vercel from './lib/vercel';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -279,84 +279,20 @@ async function executeFunction(name: string, args: any) {
     }
 
     case 'create_project': {
-      // Create GitHub repo
-      const repoName = args.name.toLowerCase().replace(/\s+/g, '-');
-      const repoResult = await github.createRepository({
-        name: repoName,
-        description: args.description,
-        private: false,
-        autoInit: true,
-      });
-
-      // Add starter files based on framework
-      const starterFiles = getStarterFiles(args.framework, args.name);
-      await github.commitMultipleFiles(
-        repoName,
-        starterFiles,
-        `Initial commit: ${args.framework} starter`,
-        'main'
-      );
-
-      // Create Vercel project and deploy
-      const vercelProject = await vercel.createProject({
-        name: repoName,
-        gitRepository: {
-          type: 'github',
-          repo: repoResult.repo.fullName,
-        },
-        framework: args.framework,
-      });
-
-      // Save to database
-      const { data: project, error } = await supabase
-        .from('projects')
-        .insert({
-          name: args.name,
-          description: args.description,
-          github_url: repoResult.repo.url,
-          status: 'active',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      // TODO: Implement GitHub + Vercel integration
       return {
-        success: true,
-        project,
-        repo: repoResult.repo,
-        vercel: vercelProject.project,
+        success: false,
+        message: 'Project creation coming soon! GitHub & Vercel APIs will be integrated.',
+        projectData: args,
       };
     }
 
     case 'modify_project_code': {
-      // Get project from database
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', args.projectId)
-        .single();
-
-      if (!projectData) throw new Error('Project not found');
-
-      // Extract repo name from GitHub URL
-      const repoName = projectData.github_url.split('/').pop();
-      
-      // Commit files to GitHub
-      await github.commitMultipleFiles(
-        repoName,
-        args.files,
-        args.commitMessage,
-        'main'
-      );
-
-      // Vercel will auto-deploy from GitHub push
-
+      // TODO: Implement GitHub commit + push
       return {
-        success: true,
-        message: 'Code updated and deployed',
+        success: false,
+        message: 'Code modification coming soon!',
         projectId: args.projectId,
-        filesUpdated: args.files.length,
       };
     }
 
