@@ -371,6 +371,51 @@ async function executeFunction(name: string, args: any) {
   }
 }
 
+async function callOpenRouter(messages: ChatMessage[]) {
+  const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+  
+  if (!OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY not configured');
+  }
+
+  const systemPrompt = `Du är en kraftfull AI-assistent med full kontroll över användarens projekt.
+
+Du har tillgång till följande verktyg via function calling:
+- create_project: Skapar GitHub repo + Vercel deploy
+- modify_project_code: Ändrar kod i befintliga projekt
+- get_projects: Listar alla projekt
+- delete_project: Raderar projekt
+
+När användaren frågar om något, använd rätt verktyg för att utföra uppgiften.
+Svara alltid på svenska.`;
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'HTTP-Referer': process.env.VERCEL_URL || 'https://mattias-portfolio.vercel.app',
+      'X-Title': 'Portfolio AI Assistant',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-3.1-70b-instruct:free', // Gratis & kraftfull
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages,
+      ],
+      tools,
+      tool_choice: 'auto',
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenRouter API error: ${error}`);
+  }
+
+  return response.json();
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -383,34 +428,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Messages array required' });
     }
 
-    // For now, we'll use a simple response system
-    // TODO: Replace with actual AI API (OpenAI, Anthropic, etc)
-    const lastMessage = messages[messages.length - 1];
-    
-    // Simple intent detection
-    let response = '';
-    const content = lastMessage.content.toLowerCase();
+    // Call OpenRouter AI
+    const aiResponse = await callOpenRouter(messages);
+    const assistantMessage = aiResponse.choices[0].message;
 
-    if (content.includes('skapa') && content.includes('projekt')) {
-      response = 'För att skapa ett nytt projekt behöver jag:\n\n1. Projektnamn\n2. Beskrivning\n3. Framework (Next.js, Vite+React, Remix, eller Astro)\n4. Eventuella features\n\nVad vill du kalla projektet?';
-    } else if (content.includes('lista') || content.includes('visa projekt')) {
-      const result = await executeFunction('get_projects', {});
-      const projects = result.projects as any[];
-      response = `Du har ${projects.length} projekt:\n\n${projects
-        .map((p) => `• ${p.name} - ${p.description}`)
-        .join('\n')}`;
-    } else if (content.includes('ändra') || content.includes('modifiera')) {
-      response = 'Jag kan ändra kod i dina projekt. Vilket projekt vill du ändra och vad vill du göra?';
-    } else if (content.includes('deploya') || content.includes('publicera')) {
-      response = 'Jag kan deploya projekt till Vercel. Vilket projekt vill du deploya?';
-    } else if (content.includes('github') || content.includes('repo')) {
-      response = 'Jag har full tillgång till GitHub API och kan skapa repos, committa kod, och öppna PRs. Vad vill du göra?';
-    } else {
-      response = `Jag förstår! Jag har full kontroll och kan:\n\n✅ Skapa nya projekt (väljer bästa framework)\n✅ Modifiera befintlig kod\n✅ Committa & pusha till GitHub\n✅ Deploya till Vercel\n✅ Hantera databas (läsa/skriva/radera)\n✅ Lista alla projekt\n\nVad vill du att jag ska göra?`;
+    // Check if AI wants to use a tool
+    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+      const toolCall = assistantMessage.tool_calls[0];
+      const functionName = toolCall.function.name;
+      const functionArgs = JSON.parse(toolCall.function.arguments);
+
+      // Execute the function
+      const result = await executeFunction(functionName, functionArgs);
+
+      // Call AI again with function result
+      const finalResponse = await callOpenRouter([
+        ...messages,
+        assistantMessage,
+        {
+          role: 'tool',
+          content: JSON.stringify(result),
+          tool_call_id: toolCall.id,
+        } as any,
+      ]);
+
+      return res.status(200).json({
+        message: finalResponse.choices[0].message.content,
+        functionCalled: functionName,
+        result,
+      });
     }
 
+    // No tool call, just return the message
     return res.status(200).json({
-      message: response,
+      message: assistantMessage.content,
       capabilities: CAPABILITIES,
     });
   } catch (error) {

@@ -16,14 +16,13 @@ GITHUB_OWNER=Arviva-Admin
 VERCEL_TOKEN=xxx  # Vercel API token
 VERCEL_TEAM_ID=xxx  # Optional: team ID
 
-# AI Provider (välj en)
-OPENAI_API_KEY=sk-xxx
-# eller
-ANTHROPIC_API_KEY=sk-ant-xxx
+# OpenRouter AI (30+ modeller, många gratis)
+OPENROUTER_API_KEY=sk-or-xxx
 ```
 
-## GitHub Token Setup
+## Setup Guide
 
+### 1. GitHub Token
 1. Gå till https://github.com/settings/tokens/new
 2. Välj scopes:
    - `repo` (full control)
@@ -31,18 +30,29 @@ ANTHROPIC_API_KEY=sk-ant-xxx
    - `admin:org` (för team repos)
 3. Kopiera token → lägg till i Vercel
 
-## Vercel Token Setup
-
+### 2. Vercel Token
 1. Gå till https://vercel.com/account/tokens
 2. Skapa ny token
 3. Kopiera → lägg till i Vercel
 
-## AI Provider
+### 3. OpenRouter API Key
+1. Gå till https://openrouter.ai/keys
+2. Logga in (GitHub/Google)
+3. Skapa ny API key
+4. **GRATIS krediter ingår!**
+5. Kopiera → lägg till i Vercel
 
-Välj en av:
-- **OpenAI GPT-4** - bäst för kod
-- **Anthropic Claude** - bäst för reasoning
-- **OpenRouter** - access till alla modeller
+## OpenRouter Modeller (Exempel)
+
+**Gratis:**
+- `meta-llama/llama-3.1-70b-instruct:free` (Standard, kraftfull)
+- `google/gemma-2-9b-it:free`
+- `mistralai/mistral-7b-instruct:free`
+
+**Betald (billig):**
+- `anthropic/claude-3.5-sonnet` ($3/1M tokens)
+- `openai/gpt-4` ($5/1M tokens)
+- `google/gemini-pro-1.5` ($0.50/1M tokens)
 
 ## Features
 
